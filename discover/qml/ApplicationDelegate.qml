@@ -35,6 +35,15 @@ Kirigami.AbstractCard {
     Keys.onReturnPressed: trigger()
     onClicked: trigger()
 
+    Kirigami.ImageColors {
+        id: appImageColorExtractor
+        source: application.icon
+    }
+
+    Component.onCompleted: {
+        background.defaultColor = Qt.binding(() => Kirigami.ColorUtils.tintWithAlpha(Kirigami.Theme.backgroundColor, appImageColorExtractor.dominant, 0.1))
+    }
+
     contentItem: Item {
         implicitHeight: delegateArea.compact ? Kirigami.Units.gridUnit * 2 : Math.round(Kirigami.Units.gridUnit * 3.5)
 
