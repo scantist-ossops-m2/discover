@@ -3,13 +3,12 @@ file(GLOB systemdsysupdate-backend_SRCS
     "*.h"
 )
 
-#set(atomupd1_xml com.steampowered.Atomupd1.xml)
-#set_source_files_properties(${atomupd1_xml} PROPERTIES
-#    INCLUDE "dbushelpers.h"
-#    NA_NAMESPACE TRUE
-#)
-qt_add_dbus_interface(systemdsysupdate-backend_SRCS org.freedesktop.sysupdate1.xml sysupdate1)
-#qt_add_dbus_interface(systemdsysupdate-backend_SRCS org.freedesktop.DBus.Properties.xml dbusproperties_interface)
+set(sysupdate1_xml org.freedesktop.sysupdate1.xml)
+set_source_files_properties(${sysupdate1_xml} PROPERTIES
+   INCLUDE "SysupdateInternal.h"
+   NA_NAMESPACE TRUE
+)
+qt_add_dbus_interface(systemdsysupdate-backend_SRCS ${sysupdate1_xml} sysupdate1)
 
 ecm_qt_declare_logging_category(systemdsysupdate-backend_SRCS
     HEADER libdiscover_systemdsysupdate_debug.h

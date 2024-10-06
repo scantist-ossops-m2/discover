@@ -1,10 +1,15 @@
 /*
- *   SPDX-FileCopyrightText: 2012 Aleix Pol Gonzalez <aleixpol@blue-systems.com>
+ *   SPDX-FileCopyrightText: 2024 Lasath Fernando <devel@lasath.org>
  *
  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
  */
 
 #include "SystemdSysupdateBackend.h"
+#include <qcollator.h>
+#include <qdbusargument.h>
+#include <qdbusextratypes.h>
+#include <qlist.h>
+#include <qobject.h>
 #include <resources/AbstractResourcesBackend.h>
 
 DISCOVER_BACKEND_PLUGIN(SystemdSysupdateBackend)

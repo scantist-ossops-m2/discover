@@ -20,6 +20,7 @@ in the middle of comments):
    <arg name="xml_data" type="s" direction="out"/>
   </method>
  </interface>
+ 
  <interface name="org.freedesktop.DBus.Properties">
   <method name="Get">
    <arg name="interface_name" direction="in" type="s"/>
@@ -29,6 +30,7 @@ in the middle of comments):
   <method name="GetAll">
    <arg name="interface_name" direction="in" type="s"/>
    <arg name="props" direction="out" type="a{sv}"/>
+   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap" />
   </method>
   <method name="Set">
    <arg name="interface_name" direction="in" type="s"/>
@@ -38,15 +40,19 @@ in the middle of comments):
   <signal name="PropertiesChanged">
    <arg type="s" name="interface_name"/>
    <arg type="a{sv}" name="changed_properties"/>
+   <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap" />
    <arg type="as" name="invalidated_properties"/>
   </signal>
  </interface>
+
  <interface name="org.freedesktop.sysupdate1.Manager">
   <method name="ListTargets">
    <arg type="a(sso)" name="targets" direction="out"/>
+   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Sysupdate::TargetList" />
   </method>
   <method name="ListJobs">
    <arg type="a(tsuo)" name="jobs" direction="out"/>
+   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Sysupdate::JobList" />
   </method>
   <method name="ListAppStream">
    <arg type="as" name="urls" direction="out"/>
@@ -75,6 +81,7 @@ in the middle of comments):
  <interface name="org.freedesktop.sysupdate1.Target">
   <property name="Class" type="s" access="read">
    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+   <annotation name="org.qtproject.QtDBus.PropertyGetter" value="className"/>
   </property>
   <property name="Name" type="s" access="read">
    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
