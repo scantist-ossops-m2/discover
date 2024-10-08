@@ -35,4 +35,7 @@ struct Target {
 typedef QList<Sysupdate::Job> JobList;
 typedef QList<Sysupdate::Target> TargetList;
 
+struct TargetInfo {
+    // TODO: Populate with properties from dbus interface
+};
 }
