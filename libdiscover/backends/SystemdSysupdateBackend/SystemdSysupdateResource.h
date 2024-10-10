@@ -5,41 +5,37 @@
 
 #include "SysupdateInternal.h"
 
+#include <AppStreamQt/component.h>
+
 class SystemdSysupdateResource : public AbstractResource
 {
     Q_OBJECT
 
 public:
-    explicit SystemdSysupdateResource(const Sysupdate::TargetInfo &targetInfo, AbstractResourcesBackend *parent);
-
-    QString appstreamId() const override;
-    QList<PackageState> addonsInformation() override;
-    QString section() override;
-    QString origin() const override;
-    QString longDescription() override;
-    QString availableVersion() const override;
-    QString installedVersion() const override;
-    QJsonArray licenses() override;
-    quint64 size() override;
-    QUrl homepage() override;
-    QUrl helpURL() override;
-    QUrl bugURL() override;
-    QUrl donationURL() override;
-    QUrl contributeURL() override;
-    bool hasCategory(const QString &category) const override;
-    AbstractResource::State state() override;
-    QVariant icon() const override;
-    QString comment() override;
-    QString name() const override;
+    SystemdSysupdateResource(const Sysupdate::Target target, const AppStream::Component component, AbstractResourcesBackend *parent);
     QString packageName() const override;
-    bool isRemovable() const override;
-    AbstractResource::Type type() const override;
+    QString name() const override;
+    QString comment() override;
+    QVariant icon() const override;
     bool canExecute() const override;
-    void invokeApplication() const override {};
-    void fetchChangelog() override;
-    QUrl url() const override;
+    void invokeApplication() const override;
+    State state() override;
+    bool hasCategory(const QString &category) const override;
+    Type type() const override;
+    quint64 size() override;
+    QJsonArray licenses() override;
+    QString installedVersion() const override;
+    QString availableVersion() const override;
+    QString longDescription() override;
+    QString origin() const override;
+    QString section() override;
     QString author() const override;
+    QList<PackageState> addonsInformation() override;
+    QString sourceIcon() const override;
+    QDate releaseDate() const override;
+    void fetchChangelog() override;
 
 private:
-    const Sysupdate::TargetInfo &m_targetInfo;
+    AppStream::Component m_component;
+    Sysupdate::Target m_target;
 };

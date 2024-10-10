@@ -1,10 +1,12 @@
 #pragma once
 
+#include <qdbusargument.h>
 #include <qdbusextratypes.h>
 #include <qtypes.h>
 
 namespace Sysupdate
 {
+Q_NAMESPACE
 
 enum class JobType {
     JOB_LIST,
@@ -25,6 +27,7 @@ enum class TargetClass {
     TARGET_APPSTREAM,
     TARGET_SYSUPDATE,
 };
+Q_ENUM_NS(TargetClass)
 
 struct Target {
     TargetClass targetClass;
@@ -32,10 +35,13 @@ struct Target {
     QDBusObjectPath objectPath;
 };
 
-typedef QList<Sysupdate::Job> JobList;
-typedef QList<Sysupdate::Target> TargetList;
+typedef QList<Job> JobList;
+typedef QList<Target> TargetList;
 
 struct TargetInfo {
     // TODO: Populate with properties from dbus interface
 };
 }
+
+QDBusArgument &operator<<(QDBusArgument &argument, const Sysupdate::Target &target);
+const QDBusArgument &operator>>(const QDBusArgument &argument, Sysupdate::Target &target);

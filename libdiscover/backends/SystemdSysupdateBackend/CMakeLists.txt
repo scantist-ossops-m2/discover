@@ -1,6 +1,10 @@
 file(GLOB systemdsysupdate-backend_SRCS
-    "*.cpp"
-    "*.h"
+    SystemdSysupdateBackend.cpp
+    SystemdSysupdateBackend.h
+    SystemdSysupdateResource.cpp
+    SystemdSysupdateResource.h
+    SysupdateInternal.cpp
+    SysupdateInternal.h
 )
 
 set(sysupdate1_xml org.freedesktop.sysupdate1.xml)
@@ -27,4 +31,5 @@ target_link_libraries(systemdsysupdate-backend
     KF6::CoreAddons
     KF6::ConfigCore
     Discover::Common
+    AppStreamQt
 )

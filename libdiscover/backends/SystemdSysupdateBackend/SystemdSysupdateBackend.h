@@ -7,8 +7,9 @@
 #ifndef SYSTEMD_SYSUPDATE_BACKEND_H
 #define SYSTEMD_SYSUPDATE_BACKEND_H
 
-#include "resources/StandardBackendUpdater.h"
+#include "sysupdate1.h"
 #include <resources/AbstractResourcesBackend.h>
+#include <resources/StandardBackendUpdater.h>
 
 class SystemdSysupdateBackend : public AbstractResourcesBackend
 {
@@ -32,6 +33,8 @@ public:
 
 private:
     StandardBackendUpdater *m_updater;
+    int m_fetchOperationCount = 0;
+    QPointer<org::freedesktop::sysupdate1::Manager> m_manager;
 };
 
 #endif // SYSTEMD_SYSUPDATE_BACKEND_H

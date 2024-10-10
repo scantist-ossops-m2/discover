@@ -5,21 +5,24 @@
  */
 
 #include "SystemdSysupdateBackend.h"
-#include "Category/Category.h"
+
 #include "resources/AbstractResource.h"
-#include <qcollator.h>
-#include <qdbusargument.h>
-#include <qdbusextratypes.h>
 #include <qlist.h>
-#include <qobject.h>
+#include <qtpreprocessorsupport.h>
 #include <resources/AbstractResourcesBackend.h>
 
 DISCOVER_BACKEND_PLUGIN(SystemdSysupdateBackend)
 
+const auto service = QStringLiteral("org.freedesktop.sysupdate1");
+const auto path = QStringLiteral("/org/freedesktop/sysupdate1");
+
 SystemdSysupdateBackend::SystemdSysupdateBackend(QObject *parent)
     : AbstractResourcesBackend(parent)
     , m_updater(new StandardBackendUpdater(this))
+    , m_manager(new org::freedesktop::sysupdate1::Manager(service, path, QDBusConnection::systemBus(), this))
 {
+    qDBusRegisterMetaType<Sysupdate::Target>();
+    qDBusRegisterMetaType<Sysupdate::TargetList>();
 }
 
 int SystemdSysupdateBackend::updatesCount() const
@@ -29,36 +32,77 @@ int SystemdSysupdateBackend::updatesCount() const
 
 bool SystemdSysupdateBackend::isValid() const
 {
-    // FIXME: check if the dbus interface exists
-    return true;
+    // Try waking up the service
+    org::freedesktop::DBus::Peer(service, path, QDBusConnection::systemBus()).Ping().waitForFinished();
+
+    return m_manager->isValid();
 }
 
 ResultsStream *SystemdSysupdateBackend::search(const AbstractResourcesBackend::Filters &filter)
 {
-    // Skip the search if we're looking into a Category, but not the "Operating System" category
-    if (filter.category && filter.category->untranslatedName() != QLatin1String("Operating System")) {
-        return new ResultsStream(QStringLiteral("rpm-ostree-empty"), {});
-    }
+    Q_UNUSED(filter);
+    return new ResultsStream(QStringLiteral("systemd-sysupdate"), QVector<StreamResult>());
+}
 
-    // Trim whitespace from beginning and end of the string entered in the search field.
-    QString keyword = filter.search.trimmed();
+AbstractBackendUpdater *SystemdSysupdateBackend::backendUpdater() const
+{
+    return m_updater;
+}
 
-    QVector<StreamResult> res;
-    for (AbstractResource *r : m_updater) {
-        // Skip if the state does not match the filter
-        if (r->state() < filter.state) {
-            continue;
+AbstractReviewsBackend *SystemdSysupdateBackend::reviewsBackend() const
+{
+    return nullptr;
+}
+
+Transaction *SystemdSysupdateBackend::installApplication(AbstractResource *app)
+{
+    Q_UNUSED(app);
+    return nullptr;
+}
+
+Transaction *SystemdSysupdateBackend::installApplication(AbstractResource *app, const AddonList &addons)
+{
+    Q_UNUSED(app);
+    Q_UNUSED(addons);
+    return nullptr;
+}
+
+Transaction *SystemdSysupdateBackend::removeApplication(AbstractResource *app)
+{
+    Q_UNUSED(app);
+    return nullptr;
+}
+
+bool SystemdSysupdateBackend::isFetching() const
+{
+    return m_fetchOperationCount > 0;
+}
+
+void SystemdSysupdateBackend::checkForUpdates()
+{
+    qDebug() << "Updating systemd-sysupdate backend...";
+    auto reply = m_manager->ListTargets();
+    auto *watcher = new QDBusPendingCallWatcher(reply, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
+        call->deleteLater();
+
+        auto watcher = QDBusPendingReply<Sysupdate::TargetList>(*call);
+        if (watcher.isError()) {
+            qWarning() << "Failed to list targets:" << watcher.error().message();
+            return;
         }
-        // Skip if the search field is not empty and neither the name, description or version matches
-        if (!keyword.isEmpty()) {
-            if (!r->name().contains(keyword) && !r->longDescription().contains(keyword) && !r->installedVersion().contains(keyword)) {
-                continue;
-            }
+
+        auto targets = watcher.value();
+        for (const auto &target : targets) {
+            qDebug() << "Target:" << target.name << QMetaEnum::fromType<Sysupdate::TargetClass>().valueToKey(static_cast<int>(target.targetClass))
+                     << target.objectPath.path();
         }
-        // Add the ressources to the search filter
-        res << r;
-    }
-    return new ResultsStream(QStringLiteral("systemd-sysupdate"), res);
+    });
+}
+
+QString SystemdSysupdateBackend::displayName() const
+{
+    return QStringLiteral("Systemd SysUpdate");
 }
 
 #include "SystemdSysupdateBackend.moc"
