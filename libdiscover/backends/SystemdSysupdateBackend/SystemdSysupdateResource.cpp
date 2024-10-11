@@ -139,4 +139,12 @@ QDate SystemdSysupdateResource::releaseDate() const
 
 void SystemdSysupdateResource::fetchChangelog()
 {
+    auto releaseList = m_component.loadReleases(true).value_or(m_component.releasesPlain());
+    auto targetRelease = availableVersion();
+    for (auto release : releaseList.entries()) {
+        if (release.version() == targetRelease) {
+            Q_EMIT changelogFetched(release.description());
+            break;
+        }
+    }
 }
