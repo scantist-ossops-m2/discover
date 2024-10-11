@@ -32,6 +32,9 @@ SystemdSysupdateBackend::SystemdSysupdateBackend(QObject *parent)
 {
     qDBusRegisterMetaType<Sysupdate::Target>();
     qDBusRegisterMetaType<Sysupdate::TargetList>();
+
+    connect(m_updater, &StandardBackendUpdater::updatesCountChanged, this, &SystemdSysupdateBackend::updatesCountChanged);
+    QTimer::singleShot(0, this, &SystemdSysupdateBackend::checkForUpdates);
 }
 
 int SystemdSysupdateBackend::updatesCount() const
@@ -101,6 +104,11 @@ void SystemdSysupdateBackend::checkForUpdates()
 
 QCoro::Task<> SystemdSysupdateBackend::checkForUpdatesAsync()
 {
+    if (isFetching()) {
+        qCInfo(category) << "Already fetching updates. Skipping...";
+        co_return;
+    }
+
     beginFetch();
 
     for (auto resource : m_resources) {
@@ -140,8 +148,11 @@ QCoro::Task<> SystemdSysupdateBackend::checkForUpdatesAsync()
                 continue;
             }
 
-            const auto data = reply->readAll();
-            metadata.parse(QString::fromUtf8(data), AppStream::Metadata::FormatKindXml);
+            // if the first non-whitespace character is not a '<', it's probably a YAML file
+            auto data = QString::fromUtf8(reply->readAll()).trimmed();
+            auto format = data.startsWith(QLatin1Char('<')) ? AppStream::Metadata::FormatKindXml : AppStream::Metadata::FormatKindYaml;
+
+            metadata.parse(data, format);
         }
 
         auto components = metadata.components();
@@ -157,7 +168,9 @@ QCoro::Task<> SystemdSysupdateBackend::checkForUpdatesAsync()
         auto component = metadata.component();
         qCDebug(category) << "Component:" << component.name() << component.summary() << component.description();
 
-        m_resources << new SystemdSysupdateResource(component, this);
+        m_resources << new SystemdSysupdateResource(this,
+                                                    component,
+                                                    {.installedVersion = co_await target.GetVersion(), .availableVersion = co_await target.CheckNew()});
     }
 
     endFetch();

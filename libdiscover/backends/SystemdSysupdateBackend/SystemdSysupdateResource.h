@@ -10,14 +10,14 @@
 class SystemdSysupdateResource : public AbstractResource
 {
     Q_OBJECT
-
 public:
-    SystemdSysupdateResource(AppStream::Component component, AbstractResourcesBackend *parent);
+    SystemdSysupdateResource(AbstractResourcesBackend *parent, const AppStream::Component &component, const Sysupdate::TargetInfo &targetInfo);
     QString packageName() const override;
     QString name() const override;
     QString comment() override;
     QVariant icon() const override;
     bool canExecute() const override;
+    bool isRemovable() const override;
     void invokeApplication() const override;
     State state() override;
     bool hasCategory(const QString &category) const override;
@@ -37,4 +37,5 @@ public:
 
 private:
     AppStream::Component m_component;
+    Sysupdate::TargetInfo m_targetInfo;
 };

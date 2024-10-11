@@ -23,16 +23,15 @@ struct Job {
     QDBusObjectPath objectPath;
 };
 
-enum class TargetClass {
-    TARGET_APPSTREAM,
-    TARGET_SYSUPDATE,
-};
-Q_ENUM_NS(TargetClass)
-
 struct Target {
     QString targetClass;
     QString name;
     QDBusObjectPath objectPath;
+};
+
+struct TargetInfo {
+    QString installedVersion;
+    QString availableVersion;
 };
 
 typedef QList<Job> JobList;

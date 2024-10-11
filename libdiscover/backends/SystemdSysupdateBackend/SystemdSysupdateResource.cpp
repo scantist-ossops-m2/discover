@@ -4,14 +4,16 @@
 
 #include "SystemdSysupdateResource.h"
 
-#include "../../../../../build/discover/notifier/Login1ManagerInterface.h"
-
 #include <AppStreamQt/developer.h>
 #include <sysupdate1.h>
 
-SystemdSysupdateResource::SystemdSysupdateResource(const AppStream::Component component, AbstractResourcesBackend *parent)
+SystemdSysupdateResource::SystemdSysupdateResource(AbstractResourcesBackend *parent,
+                                                   const AppStream::Component &component,
+                                                   const Sysupdate::TargetInfo &targetInfo)
+
     : AbstractResource(parent)
     , m_component(component)
+    , m_targetInfo(targetInfo)
 {
 }
 
@@ -41,8 +43,14 @@ QVariant SystemdSysupdateResource::icon() const
 
 bool SystemdSysupdateResource::canExecute() const
 {
-    // TODO: Should we only allow this if newer
-    return true;
+    // It doesn't make sense to have a "Launch" button for the OS
+    return false;
+}
+
+bool SystemdSysupdateResource::isRemovable() const
+{
+    // Doesn't make sense to remove the OS either
+    return false;
 }
 
 void SystemdSysupdateResource::invokeApplication() const
@@ -51,7 +59,7 @@ void SystemdSysupdateResource::invokeApplication() const
 
 AbstractResource::State SystemdSysupdateResource::state()
 {
-    return Upgradeable;
+    return availableVersion() != installedVersion() ? Upgradeable : Installed;
 }
 
 bool SystemdSysupdateResource::hasCategory(const QString &category) const
@@ -66,8 +74,9 @@ AbstractResource::Type SystemdSysupdateResource::type() const
 
 quint64 SystemdSysupdateResource::size()
 {
-    // FIXME: Query Target for size
-    return 6;
+    // Will need to be updated once sysupdate implements size querying
+    // https://github.com/systemd/systemd/issues/34710
+    return 0;
 }
 
 QJsonArray SystemdSysupdateResource::licenses()
@@ -77,12 +86,12 @@ QJsonArray SystemdSysupdateResource::licenses()
 
 QString SystemdSysupdateResource::installedVersion() const
 {
-    return QStringLiteral("debug_202410070621");
+    return m_targetInfo.installedVersion;
 }
 
 QString SystemdSysupdateResource::availableVersion() const
 {
-    return QStringLiteral("202410100008");
+    return m_targetInfo.availableVersion;
 }
 
 QString SystemdSysupdateResource::longDescription()
