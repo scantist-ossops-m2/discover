@@ -4,17 +4,23 @@
 
 #include "SystemdSysupdateResource.h"
 
-#include <AppStreamQt/developer.h>
+#include "../../../../../build/discover/notifier/Login1ManagerInterface.h"
 
-SystemdSysupdateResource::SystemdSysupdateResource(const Sysupdate::Target target, const AppStream::Component component, AbstractResourcesBackend *parent)
+#include <AppStreamQt/developer.h>
+#include <sysupdate1.h>
+
+SystemdSysupdateResource::SystemdSysupdateResource(const AppStream::Component component, AbstractResourcesBackend *parent)
     : AbstractResource(parent)
     , m_component(component)
-    , m_target(target)
 {
 }
 
 QString SystemdSysupdateResource::packageName() const
 {
+    if (m_component.packageNames().isEmpty()) {
+        return QString();
+    }
+
     return m_component.packageNames().first();
 }
 

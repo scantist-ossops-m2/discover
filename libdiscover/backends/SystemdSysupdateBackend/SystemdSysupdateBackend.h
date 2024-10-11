@@ -7,7 +7,11 @@
 #ifndef SYSTEMD_SYSUPDATE_BACKEND_H
 #define SYSTEMD_SYSUPDATE_BACKEND_H
 
+#include "SystemdSysupdateResource.h"
 #include "sysupdate1.h"
+
+#include <QCoro/QCoroTask>
+#include <QNetworkAccessManager>
 #include <resources/AbstractResourcesBackend.h>
 #include <resources/StandardBackendUpdater.h>
 
@@ -32,9 +36,17 @@ public:
     QString displayName() const override;
 
 private:
-    StandardBackendUpdater *m_updater;
+    void beginFetch();
+    void endFetch();
+    QCoro::Task<> checkForUpdatesAsync();
+
     int m_fetchOperationCount = 0;
+    StandardBackendUpdater *m_updater;
+
+    QList<QPointer<SystemdSysupdateResource>> m_resources;
     QPointer<org::freedesktop::sysupdate1::Manager> m_manager;
+
+    QNetworkAccessManager *m_nam;
 };
 
 #endif // SYSTEMD_SYSUPDATE_BACKEND_H

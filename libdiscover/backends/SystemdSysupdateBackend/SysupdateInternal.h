@@ -30,17 +30,13 @@ enum class TargetClass {
 Q_ENUM_NS(TargetClass)
 
 struct Target {
-    TargetClass targetClass;
+    QString targetClass;
     QString name;
     QDBusObjectPath objectPath;
 };
 
 typedef QList<Job> JobList;
 typedef QList<Target> TargetList;
-
-struct TargetInfo {
-    // TODO: Populate with properties from dbus interface
-};
 }
 
 QDBusArgument &operator<<(QDBusArgument &argument, const Sysupdate::Target &target);

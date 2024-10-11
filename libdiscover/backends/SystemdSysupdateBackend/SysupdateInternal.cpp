@@ -27,17 +27,15 @@ Q_DECLARE_METATYPE(Sysupdate::JobList)
 QDBusArgument &operator<<(QDBusArgument &argument, const Sysupdate::Target &target)
 {
     argument.beginStructure();
-    argument << QMetaEnum::fromType<Sysupdate::TargetClass>().key(static_cast<int>(target.targetClass)) << target.name << target.objectPath;
+    argument << target.targetClass << target.name << target.objectPath;
     argument.endStructure();
     return argument;
 }
 
 const QDBusArgument &operator>>(const QDBusArgument &argument, Sysupdate::Target &target)
 {
-    QString targetClass;
     argument.beginStructure();
-    argument >> targetClass >> target.name >> target.objectPath;
-    target.targetClass = static_cast<Sysupdate::TargetClass>(QMetaEnum::fromType<Sysupdate::TargetClass>().keyToValue(targetClass.toUtf8().constData()));
+    argument >> target.targetClass >> target.name >> target.objectPath;
     argument.endStructure();
     return argument;
 }

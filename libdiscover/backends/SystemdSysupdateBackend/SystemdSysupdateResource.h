@@ -12,7 +12,7 @@ class SystemdSysupdateResource : public AbstractResource
     Q_OBJECT
 
 public:
-    SystemdSysupdateResource(const Sysupdate::Target target, const AppStream::Component component, AbstractResourcesBackend *parent);
+    SystemdSysupdateResource(AppStream::Component component, AbstractResourcesBackend *parent);
     QString packageName() const override;
     QString name() const override;
     QString comment() override;
@@ -37,5 +37,4 @@ public:
 
 private:
     AppStream::Component m_component;
-    Sysupdate::Target m_target;
 };
