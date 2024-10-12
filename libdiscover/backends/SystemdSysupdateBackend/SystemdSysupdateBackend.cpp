@@ -6,6 +6,7 @@
 
 #include "SystemdSysupdateBackend.h"
 #include "SystemdSysupdateResource.h"
+#include "SystemdSysupdateTransaction.h"
 #include "libdiscover_systemdsysupdate_debug.h"
 
 #include <AppStreamQt/metadata.h>
@@ -21,18 +22,18 @@ DISCOVER_BACKEND_PLUGIN(SystemdSysupdateBackend)
 
 #define category LIBDISCOVER_BACKEND_SYSTEMDSYSUPDATE_LOG
 
-const auto service = QStringLiteral("org.freedesktop.sysupdate1");
 const auto path = QStringLiteral("/org/freedesktop/sysupdate1");
 
 SystemdSysupdateBackend::SystemdSysupdateBackend(QObject *parent)
     : AbstractResourcesBackend(parent)
     , m_updater(new StandardBackendUpdater(this))
-    , m_manager(new org::freedesktop::sysupdate1::Manager(service, path, QDBusConnection::systemBus(), this))
+    , m_manager(new org::freedesktop::sysupdate1::Manager(SYSUPDATE1_SERVICE, path, QDBusConnection::systemBus(), this))
     , m_nam(new QNetworkAccessManager(this))
 {
     qDBusRegisterMetaType<Sysupdate::Target>();
     qDBusRegisterMetaType<Sysupdate::TargetList>();
 
+    connect(m_manager, &org::freedesktop::sysupdate1::Manager::JobRemoved, this, &SystemdSysupdateBackend::transactionRemoved);
     connect(m_updater, &StandardBackendUpdater::updatesCountChanged, this, &SystemdSysupdateBackend::updatesCountChanged);
     QTimer::singleShot(0, this, &SystemdSysupdateBackend::checkForUpdates);
 }
@@ -44,7 +45,7 @@ int SystemdSysupdateBackend::updatesCount() const
 
 bool SystemdSysupdateBackend::isValid() const
 {
-    auto ping = org::freedesktop::DBus::Peer(service, path, QDBusConnection::systemBus()).Ping();
+    auto ping = org::freedesktop::DBus::Peer(SYSUPDATE1_SERVICE, path, QDBusConnection::systemBus()).Ping();
     ping.waitForFinished();
     return !ping.isError();
 }
@@ -74,15 +75,19 @@ AbstractReviewsBackend *SystemdSysupdateBackend::reviewsBackend() const
 
 Transaction *SystemdSysupdateBackend::installApplication(AbstractResource *app)
 {
-    Q_UNUSED(app);
-    return nullptr;
+    const auto resource = qobject_cast<SystemdSysupdateResource *>(app);
+    if (!resource) {
+        qCCritical(category) << "Failed to cast resource to SystemdSysupdateResource";
+        return nullptr;
+    }
+
+    return resource->update();
 }
 
 Transaction *SystemdSysupdateBackend::installApplication(AbstractResource *app, const AddonList &addons)
 {
-    Q_UNUSED(app);
     Q_UNUSED(addons);
-    return nullptr;
+    return installApplication(app);
 }
 
 Transaction *SystemdSysupdateBackend::removeApplication(AbstractResource *app)
@@ -127,8 +132,8 @@ QCoro::Task<> SystemdSysupdateBackend::checkForUpdatesAsync()
     for (const auto &[targetClass, name, objectPath] : targetsReply.value()) {
         qCDebug(category) << "Target:" << name << targetClass << objectPath.path();
 
-        org::freedesktop::sysupdate1::Target target(service, objectPath.path(), QDBusConnection::systemBus(), this);
-        const auto appStream = co_await target.GetAppStream();
+        auto target = new org::freedesktop::sysupdate1::Target(SYSUPDATE1_SERVICE, objectPath.path(), QDBusConnection::systemBus(), this);
+        const auto appStream = co_await target->GetAppStream();
         if (appStream.isError()) {
             qCCritical(category) << "Failed to get appstream for target (" << name << ") :" << appStream.error().message();
             continue;
@@ -170,7 +175,8 @@ QCoro::Task<> SystemdSysupdateBackend::checkForUpdatesAsync()
 
         m_resources << new SystemdSysupdateResource(this,
                                                     component,
-                                                    {.installedVersion = co_await target.GetVersion(), .availableVersion = co_await target.CheckNew()});
+                                                    {.installedVersion = co_await target->GetVersion(), .availableVersion = co_await target->CheckNew()},
+                                                    target);
     }
 
     endFetch();

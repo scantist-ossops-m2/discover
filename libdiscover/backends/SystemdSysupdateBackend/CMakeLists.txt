@@ -5,6 +5,8 @@ file(GLOB systemdsysupdate-backend_SRCS
     SystemdSysupdateResource.h
     SysupdateInternal.cpp
     SysupdateInternal.h
+    SystemdSysupdateTransaction.cpp
+    SystemdSysupdateTransaction.h
 )
 
 set(sysupdate1_xml org.freedesktop.sysupdate1.xml)

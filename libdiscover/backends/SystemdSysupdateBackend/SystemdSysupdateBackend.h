@@ -47,6 +47,9 @@ private:
     QPointer<org::freedesktop::sysupdate1::Manager> m_manager;
 
     QNetworkAccessManager *m_nam;
+
+Q_SIGNALS:
+    void transactionRemoved(qulonglong id, const QDBusObjectPath &path, int status);
 };
 
 #endif // SYSTEMD_SYSUPDATE_BACKEND_H

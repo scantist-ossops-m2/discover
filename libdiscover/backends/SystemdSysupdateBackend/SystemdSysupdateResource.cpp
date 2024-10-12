@@ -5,16 +5,22 @@
 #include "SystemdSysupdateResource.h"
 
 #include <AppStreamQt/developer.h>
+#include <libdiscover_systemdsysupdate_debug.h>
 #include <sysupdate1.h>
+
+#define category LIBDISCOVER_BACKEND_SYSTEMDSYSUPDATE_LOG
 
 SystemdSysupdateResource::SystemdSysupdateResource(AbstractResourcesBackend *parent,
                                                    const AppStream::Component &component,
-                                                   const Sysupdate::TargetInfo &targetInfo)
+                                                   const Sysupdate::TargetInfo &targetInfo,
+                                                   org::freedesktop::sysupdate1::Target *target)
 
     : AbstractResource(parent)
     , m_component(component)
     , m_targetInfo(targetInfo)
+    , m_target(target)
 {
+    m_target->setParent(this);
 }
 
 QString SystemdSysupdateResource::packageName() const
@@ -139,12 +145,32 @@ QDate SystemdSysupdateResource::releaseDate() const
 
 void SystemdSysupdateResource::fetchChangelog()
 {
-    auto releaseList = m_component.loadReleases(true).value_or(m_component.releasesPlain());
-    auto targetRelease = availableVersion();
+    const auto releaseList = m_component.loadReleases(true).value_or(m_component.releasesPlain());
+    const auto targetRelease = availableVersion();
     for (auto release : releaseList.entries()) {
         if (release.version() == targetRelease) {
             Q_EMIT changelogFetched(release.description());
             break;
         }
     }
+}
+
+SystemdSysupdateTransaction *SystemdSysupdateResource::update()
+{
+    qCInfo(category) << "Updating target" << name();
+    auto reply = m_target->Update(availableVersion(), 0);
+    reply.waitForFinished();
+    if (reply.isError()) {
+        qCCritical(category) << "Failed to update target:" << reply.error().name() << reply.error().message();
+
+        // Looks like we still need to return something to avoid the UI segfaulting
+        const auto failed = new SystemdSysupdateTransaction(this, 0, {});
+        // If we set the status immediately, the UI not know it's complete
+        QTimer::singleShot(0, failed, [failed] {
+            failed->setStatus(Transaction::DoneWithErrorStatus);
+        });
+        return failed;
+    }
+
+    return new SystemdSysupdateTransaction(this, reply.argumentAt<1>(), reply.argumentAt<0>());
 }
